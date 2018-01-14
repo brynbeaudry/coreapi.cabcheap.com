@@ -225,7 +225,7 @@ namespace api.cabcheap.com
             });
 
             //Comment this out when running a migration. Then run after the database is created.
-            //DummyData.Initialize(ctx, app.ApplicationServices);
+            DummyData.Initialize(ctx, app.ApplicationServices);
             
            
 
