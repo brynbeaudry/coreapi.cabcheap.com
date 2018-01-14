@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,6 +25,13 @@ namespace api.cabcheap.com.Models
 
         //END WAYPOINT
         public Waypoint EndWaypoint { get; set; }
+
+        //THE START POINT'S POSITION ON TRIP, IF ANY
+        public int StartTripPostion { get; set; }
+
+        //THE START POINT'S POSITION ON TRIP, IF ANY
+        public int EndTripPostion { get; set; }
+
 
         //START TIME - Chosen by user.
         [DataType(DataType.Date)]
@@ -52,6 +60,7 @@ namespace api.cabcheap.com.Models
         //COST - calculated from rate over distance and time.
         [RegularExpression(@"^\d+\.\d{0,2}$")]
         [Range(0, 9999999999999.99)]
+        [Column(TypeName = "decimal(13,2)")]
         public decimal Cost { get; set; }
 
     }

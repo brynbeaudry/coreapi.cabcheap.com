@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,10 +38,12 @@ namespace api.cabcheap.com.Models
         public DateTime UpdatedAt { get { return _UpdatedAt; } set { _UpdatedAt = value; } }
 
         //LIST OF ROUTES
+        public List<Route> Routes { get; set; }
 
         //Cost - Calculated from the cost over distance travels for all routes on trip
         [RegularExpression(@"^\d+\.\d{0,2}$")]
         [Range(0, 9999999999999.99)]
+        [Column(TypeName = "decimal(13,2)")]
         public decimal Cost { get; set; }
     }
 }

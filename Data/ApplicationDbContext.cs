@@ -11,6 +11,12 @@ namespace api.cabcheap.com.Data
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Trip> Trips { get; set; }
+        public DbSet<Route> Routes { get; set; }
+        public DbSet<Waypoint> Waypoints { get; set; }
+        public DbSet<Location> Locations { get; set; }
+
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -37,6 +43,7 @@ namespace api.cabcheap.com.Data
             builder.Entity<ApplicationUser>()
                 .HasIndex("ProviderName")
                 .HasName("ProviderNameIndex");
+
             //can make forieg key later
 
             /* builder.Entity<Image>()
