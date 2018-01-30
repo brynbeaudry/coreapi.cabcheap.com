@@ -40,6 +40,37 @@ namespace api.cabcheap.com.Controllers
         [TempData]
         public string ErrorMessage { get; set; }
 
+        [AllowAnonymous]
+        [HttpPost("/api/register")]
+        public async Task<IActionResult> ApiRegisterAsync([FromBody]LoginViewModel lmv)
+        {
+                var result = await _userManager.CreateAsync(
+                    new ApplicationUser(){ 
+                        Email = lmv.Email, 
+                        UserName = lmv.UserName,
+                        ProviderName = "EMAIL",
+                        ProviderId = $"GGCVAN_{Guid.NewGuid().ToString()}",
+                        PictureUrl = "https://cdn.iconscout.com/public/images/icon/premium/png-512/gamer-games-video-casino-372bcf114ef0140a-512x512.png"
+                    }, 
+                    lmv.Password);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("User created a new account with password.");
+
+                    //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    //var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+                    //await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+
+                    //await _signInManager.SignInAsync(user, isPersistent: false);
+                    //_logger.LogInformation("User created a new account with password.");
+                    return Ok(result);
+                    //return RedirectToLocal(returnUrl);
+                }
+                AddErrors(result);
+                return BadRequest(result);
+        }
+
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
