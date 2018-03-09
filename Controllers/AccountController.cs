@@ -47,9 +47,10 @@ namespace api.cabcheap.com.Controllers
                 var result = await _userManager.CreateAsync(
                     new ApplicationUser(){ 
                         Email = lmv.Email, 
-                        UserName = lmv.UserName,
+                        FirstName = lmv.FirstName,
+                        LastName = lmv.Lastname,
                         ProviderName = "EMAIL",
-                        ProviderId = $"GGCVAN_{Guid.NewGuid().ToString()}",
+                        ProviderId = $"CACHEAP_{Guid.NewGuid().ToString()}",
                         PictureUrl = "https://cdn.iconscout.com/public/images/icon/premium/png-512/gamer-games-video-casino-372bcf114ef0140a-512x512.png"
                     }, 
                     lmv.Password);

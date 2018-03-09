@@ -80,7 +80,8 @@ namespace api.cabcheap.com.Data
                 var user = new ApplicationUser
                 {
                     Email = "a@a.a",
-                    UserName = "a",
+                    FirstName = "a",
+                    LastName = "a",
                     ProviderName = "EMAIL"
                 };
                 var result = await userManager.CreateAsync(user, "password");
@@ -95,6 +96,8 @@ namespace api.cabcheap.com.Data
                 {
                     Email = "b@b.b",
                     UserName = "b",
+                    LastName = "b",
+                    FirstName = "b",
                     ProviderName = "EMAIL"
                 };
                 var result = await userManager.CreateAsync(user, "password");
@@ -109,6 +112,8 @@ namespace api.cabcheap.com.Data
                 {
                     Email = "c@c.c",
                     UserName = "c",
+                    FirstName = "c",
+                    LastName = "c",
                     ProviderName = "EMAIL"
                 };
                 var result = await userManager.CreateAsync(user, "password");
@@ -123,6 +128,8 @@ namespace api.cabcheap.com.Data
                 {
                     Email = "d@d.d",
                     UserName = "d",
+                    FirstName = "d",
+                    LastName = "d", 
                     ProviderName = "EMAIL"
                 };
                 var result = await userManager.CreateAsync(user, "password");
