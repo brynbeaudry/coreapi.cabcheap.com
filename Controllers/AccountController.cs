@@ -46,7 +46,8 @@ namespace api.cabcheap.com.Controllers
         {
                 var result = await _userManager.CreateAsync(
                     new ApplicationUser(){ 
-                        Email = lmv.Email, 
+                        Email = lmv.Email,
+                        UserName = lmv.UserName,
                         FirstName = lmv.FirstName,
                         LastName = lmv.Lastname,
                         ProviderName = "EMAIL",
