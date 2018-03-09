@@ -14,6 +14,10 @@ namespace api.cabcheap.com.Models.AccountViewModels
 
         public string UserName { get; set; }
 
+        public string FirstName { get; set; } 
+
+        public string Lastname { get; set; }
+
         [Required]
         [DataType(DataType.Password)]
         public string Password { get; set; }
