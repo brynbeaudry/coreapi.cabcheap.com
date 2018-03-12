@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using api.cabcheap.com.Data;
 using api.cabcheap.com.Models;
 
-namespace api.cabcheap.com.Controllers
+namespace api.cabcheap.com.Controllers.api
 {
     [Produces("application/json")]
     [Route("api/Trips")]
