@@ -23,6 +23,7 @@ using AspNet.Security.OpenIdConnect.Primitives;
 using AspNet.Security.OpenIdConnect.Server;
 using AspNet.Security.OpenIdConnect.Extensions;
 using OpenIddict.Core;
+using AspNet.Security.OAuth.Validation;
 
 namespace api.cabcheap.com.Controllers
 {
@@ -655,65 +656,65 @@ namespace api.cabcheap.com.Controllers
                 return SignIn(ticket.Principal, ticket.Properties, ticket.AuthenticationScheme);
             }
 
-        [Authorize]
+        [Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
         [HttpPost("/connect/logout")]
         //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
-            {
-                // Ask ASP.NET Core Identity to delete the local and external cookies created
-                // when the user agent is redirected from the external identity provider
-                // after a successful authentication flow (e.g Google or Facebook).
-                await _signInManager.SignOutAsync();
+        {
+            // Ask ASP.NET Core Identity to delete the local and external cookies created
+            // when the user agent is redirected from the external identity provider
+            // after a successful authentication flow (e.g Google or Facebook).
+            await _signInManager.SignOutAsync();
 
-                // Returning a SignOutResult will ask OpenIddict to redirect the user agent
-                // to the post_logout_redirect_uri specified by the client application.
-                return SignOut(OpenIdConnectServerDefaults.AuthenticationScheme);
+            // Returning a SignOutResult will ask OpenIddict to redirect the user agent
+            // to the post_logout_redirect_uri specified by the client application.
+            return SignOut(OpenIdConnectServerDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("/api/userinfo")]
+        //[Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> Userinfo()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return BadRequest(new OpenIdConnectResponse
+                {
+                    Error = OpenIdConnectConstants.Errors.InvalidGrant,
+                    ErrorDescription = "The user profile is no longer available."
+                });
             }
 
-            [HttpGet("/api/userinfo")]
-            //[Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-            public async Task<IActionResult> Userinfo()
+            var claims = new JObject
             {
-                var user = await _userManager.GetUserAsync(User);
+                // Note: the "sub" claim is a mandatory claim and must be included in the JSON response.
+                [OpenIdConnectConstants.Claims.Subject] = user.Id,
+                //[OpenIdConnectConstants.Claims.Nickname] = user.Nickname
+            };
 
-                if (user == null)
-                {
-                    return BadRequest(new OpenIdConnectResponse
-                    {
-                        Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                        ErrorDescription = "The user profile is no longer available."
-                    });
-                }
-
-                var claims = new JObject
-                {
-                    // Note: the "sub" claim is a mandatory claim and must be included in the JSON response.
-                    [OpenIdConnectConstants.Claims.Subject] = user.Id,
-                    //[OpenIdConnectConstants.Claims.Nickname] = user.Nickname
-                };
-
-                if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIdConnectConstants.Scopes.Email))
-                {
-                    claims[OpenIdConnectConstants.Claims.Email] = user.Email;
-                    //claims[OpenIdConnectConstants.Claims.EmailVerified] = user.EmailConfirmed;
-                }
-
-                if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIdConnectConstants.Scopes.Phone))
-                {
-                    claims[OpenIdConnectConstants.Claims.PhoneNumber] = user.PhoneNumber;
-                    claims[OpenIdConnectConstants.Claims.PhoneNumberVerified] = user.PhoneNumberConfirmed;
-                }
-
-                if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIddictConstants.Scopes.Roles))
-                {
-                    //laims["roles"] = JArray.FromObject(user.ROles);
-                }
-
-                // Note: the complete list of standard claims supported by the OpenID Connect specification
-                // can be found here: http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
-
-                return Json(claims);
+            if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIdConnectConstants.Scopes.Email))
+            {
+                claims[OpenIdConnectConstants.Claims.Email] = user.Email;
+                //claims[OpenIdConnectConstants.Claims.EmailVerified] = user.EmailConfirmed;
             }
+
+            if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIdConnectConstants.Scopes.Phone))
+            {
+                claims[OpenIdConnectConstants.Claims.PhoneNumber] = user.PhoneNumber;
+                claims[OpenIdConnectConstants.Claims.PhoneNumberVerified] = user.PhoneNumberConfirmed;
+            }
+
+            if (User.HasClaim(OpenIdConnectConstants.Claims.Scope, OpenIddictConstants.Scopes.Roles))
+            {
+                //laims["roles"] = JArray.FromObject(user.ROles);
+            }
+
+            // Note: the complete list of standard claims supported by the OpenID Connect specification
+            // can be found here: http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+
+            return Json(claims);
+        }
 
         private async Task<AuthenticationTicket> CreateTicketAsync(OpenIdConnectRequest request, ApplicationUser user, AuthenticationProperties properties = null)
         {
