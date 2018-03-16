@@ -24,6 +24,9 @@ using AspNet.Security.OpenIdConnect.Server;
 using AspNet.Security.OpenIdConnect.Extensions;
 using OpenIddict.Core;
 using AspNet.Security.OAuth.Validation;
+using OpenIddict.Models;
+using System.Threading;
+using System.Collections.Immutable;
 
 namespace api.cabcheap.com.Controllers
 {
@@ -34,6 +37,8 @@ namespace api.cabcheap.com.Controllers
             private readonly IEmailSender _emailSender;
             private readonly ILogger _logger;
             private readonly IConfiguration _config;
+
+            private readonly OpenIddictTokenManager<OpenIddictToken> _tokenManager;
 
             private readonly ApplicationDbContext _ctx;
             private const string GoogleApiTokenInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={0}";
@@ -48,7 +53,8 @@ namespace api.cabcheap.com.Controllers
                 IEmailSender emailSender,
                 ILogger<AuthorizationController> logger,
                 IConfiguration configuration,
-                ApplicationDbContext ctx
+                ApplicationDbContext ctx,
+                OpenIddictTokenManager<OpenIddictToken> tokenManager
                 )
             {
                 _userManager = userManager;
@@ -57,6 +63,7 @@ namespace api.cabcheap.com.Controllers
                 _logger = logger;
                 _config = configuration;
                 _ctx = ctx;
+                _tokenManager = tokenManager;
             }
 
         public async Task<ProviderUserDetails> GetGoogleDetailsAsync(string providerToken)
@@ -657,18 +664,34 @@ namespace api.cabcheap.com.Controllers
             }
 
         [Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
-        [HttpPost("/connect/logout")]
+        [HttpGet("/connect/logout")]
         //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout([FromRoute] string id)
         {
-            // Ask ASP.NET Core Identity to delete the local and external cookies created
+            CancellationToken ct = new CancellationToken();
+            ImmutableArray<OpenIddictToken> tokenList = await _tokenManager.FindBySubjectAsync(id, ct);
+            var isTokensDeleted = true;
+            foreach (var item in tokenList)
+            {
+                var deleteTask = _tokenManager.DeleteAsync(item, ct);
+                await deleteTask;
+                if(!deleteTask.IsCompletedSuccessfully){
+                    isTokensDeleted = false;
+                    break;
+                }
+            }
+            if(!isTokensDeleted){
+                return BadRequest("Tokens could not be deleted");
+            }
+            return Ok("Successfully Logged Out");
+            /* // Ask ASP.NET Core Identity to delete the local and external cookies created
             // when the user agent is redirected from the external identity provider
             // after a successful authentication flow (e.g Google or Facebook).
             await _signInManager.SignOutAsync();
 
             // Returning a SignOutResult will ask OpenIddict to redirect the user agent
             // to the post_logout_redirect_uri specified by the client application.
-            return SignOut(OAuthValidationDefaults.AuthenticationScheme);
+            return SignOut(OAuthValidationDefaults.AuthenticationScheme); */
         }
 
         [HttpGet("/api/userinfo")]
