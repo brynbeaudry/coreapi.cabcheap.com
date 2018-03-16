@@ -668,7 +668,7 @@ namespace api.cabcheap.com.Controllers
 
             // Returning a SignOutResult will ask OpenIddict to redirect the user agent
             // to the post_logout_redirect_uri specified by the client application.
-            return SignOut(OpenIdConnectServerDefaults.AuthenticationScheme);
+            return SignOut(OAuthValidationDefaults.AuthenticationScheme);
         }
 
         [HttpGet("/api/userinfo")]
