@@ -40,6 +40,10 @@ namespace api.cabcheap.com.Controllers
 
             private readonly OpenIddictTokenManager<OpenIddictToken> _tokenManager;
 
+            private readonly OpenIddictAuthorizationManager<OpenIddictAuthorization> _authorizationManager;
+
+
+
             private readonly ApplicationDbContext _ctx;
             private const string GoogleApiTokenInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={0}";
             private const string GoogleApiUserInfoUrl = "https://www.googleapis.com/plus/v1/people/{0}?userIp={1}&key={2}";
@@ -54,7 +58,9 @@ namespace api.cabcheap.com.Controllers
                 ILogger<AuthorizationController> logger,
                 IConfiguration configuration,
                 ApplicationDbContext ctx,
-                OpenIddictTokenManager<OpenIddictToken> tokenManager
+                OpenIddictTokenManager<OpenIddictToken> tokenManager,
+                OpenIddictAuthorizationManager<OpenIddictAuthorization> authorizationManager
+
                 )
             {
                 _userManager = userManager;
@@ -64,6 +70,7 @@ namespace api.cabcheap.com.Controllers
                 _config = configuration;
                 _ctx = ctx;
                 _tokenManager = tokenManager;
+                _authorizationManager = authorizationManager;
             }
 
         public async Task<ProviderUserDetails> GetGoogleDetailsAsync(string providerToken)
@@ -664,35 +671,55 @@ namespace api.cabcheap.com.Controllers
             }
 
         [Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
-        [HttpGet("/connect/logout")]
+        [HttpPost("/connect/logout")]
         //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout([FromRoute] string id)
+        public async Task<IActionResult> Logout()
         {
-            CancellationToken ct = new CancellationToken();
-            ImmutableArray<OpenIddictToken> tokenList = await _tokenManager.FindBySubjectAsync(id, ct);
-            var isTokensDeleted = true;
-            foreach (var item in tokenList)
-            {
-                var deleteTask = _tokenManager.DeleteAsync(item, ct);
-                await deleteTask;
-                if(!deleteTask.IsCompletedSuccessfully){
-                    isTokensDeleted = false;
-                    break;
-                }
-            }
-            if(!isTokensDeleted){
-                return BadRequest("Tokens could not be deleted");
-            }
-            return Ok("Successfully Logged Out");
-            /* // Ask ASP.NET Core Identity to delete the local and external cookies created
+            
+            // Ask ASP.NET Core Identity to delete the local and external cookies created
             // when the user agent is redirected from the external identity provider
             // after a successful authentication flow (e.g Google or Facebook).
             await _signInManager.SignOutAsync();
 
             // Returning a SignOutResult will ask OpenIddict to redirect the user agent
             // to the post_logout_redirect_uri specified by the client application.
-            return SignOut(OAuthValidationDefaults.AuthenticationScheme); */
+            return SignOut(OAuthValidationDefaults.AuthenticationScheme);
         }
+
+        [HttpGet("/api/logout/{id}")]
+        [Produces("application/json")]
+        [Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> LogoutApi([FromRoute] string id)
+        {
+            CancellationToken ct = new CancellationToken();
+            ImmutableArray<OpenIddictToken> tokenList = await _tokenManager.FindBySubjectAsync(id, ct);
+            var isAuthorizationsDeleted = true;
+            foreach (var item in tokenList)
+            {
+                //var authorization = await _authorizationManager.Find
+                CancellationToken ct2 = new CancellationToken();
+                var authorizationId = await _tokenManager.GetAuthorizationIdAsync(item, ct2);
+                var authorization = await _authorizationManager.FindByIdAsync(authorizationId, ct2);
+                var deleteAuthorizationTask = _authorizationManager.DeleteAsync(authorization, ct2);
+                await deleteAuthorizationTask;
+                if(!deleteAuthorizationTask.IsCompletedSuccessfully){
+                    isAuthorizationsDeleted = false;
+                    break;
+                }
+            }
+            if(!isAuthorizationsDeleted){
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "Couldn't Delete Authorizations"}
+                 } );
+            }
+            return Ok(new JObject { 
+                    {"success", true},
+                    {"message", "No more authorizations for this user remain. Logout Successful"}
+                 } );
+        }
+
+
 
         [HttpGet("/api/userinfo")]
         //[Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
