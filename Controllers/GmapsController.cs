@@ -99,6 +99,56 @@ namespace api.cabcheap.com.Controllers
             }
         }
 
+        [HttpGet("/gmaps/directions")]
+        [Produces("application/json")]
+        //[Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetDirections([FromQuery] string origin, [FromQuery] string destination)
+        {
+            if(origin.CompareTo("")==0){
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "origin is empty, cannot get directions"}
+                 } );
+            }
+            if(destination.CompareTo("")==0){
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "destination is empty, cannot get directions"}
+                 } );
+            }
+            var response = await getDirectionsHttpResponseResult(origin, destination);
+            if(response != null){
+                return Ok(response);
+            }else {
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "Request for directions was bad"}
+                 } );   
+            }
+        }
+
+        [HttpGet("/gmaps/places/details/{placeid}")]
+        [Produces("application/json")]
+        //[Authorize(AuthenticationSchemes = OAuthValidationDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetPlacesDetailsByPlaceId([FromRoute] string placeid)
+        {
+            if(placeid.CompareTo("")==0){
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "input is empty, cannot look up place"}
+                 } );
+            }
+            var response = await getPlacesDetailsByPlaceIdHttpResponseResult(placeid);
+            if(response != null){
+                return Ok(response);
+            }else {
+                return BadRequest( new JObject { 
+                    {"success", false},
+                    {"message", "Request for place was bad"}
+                 } );   
+            }
+        }
+
 
 
         public async Task<JObject> getPlacesHttpResponseResult(string input){
@@ -108,6 +158,53 @@ namespace api.cabcheap.com.Controllers
             qb.Add("key", _googleApiKey);
             
             Uri RequestUri = new Uri(GooglePlacesAutoCompleteApiUrl + qb.ToQueryString());
+            // new Uri(string.Format(GoogleApiTokenInfoUrl, providerToken));
+            
+            
+            HttpResponseMessage httpResponseMessage = new HttpResponseMessage();
+            httpResponseMessage = await httpClient.GetAsync(RequestUri);
+
+            if (httpResponseMessage.StatusCode != HttpStatusCode.OK)
+            {
+                //Console.WriteLine(ex.Message);
+                return null;
+            }
+
+            var response = JObject.Parse(httpResponseMessage.Content.ReadAsStringAsync().Result);
+            return response;
+        }
+
+        public async Task<JObject> getPlacesDetailsByPlaceIdHttpResponseResult(string placeId){
+            var httpClient = new HttpClient();
+            var qb = new QueryBuilder();
+            qb.Add("placeid", placeId);
+            qb.Add("key", _googleApiKey);
+            
+            Uri RequestUri = new Uri(GooglePlacesDetailsApiUrl + qb.ToQueryString());
+            // new Uri(string.Format(GoogleApiTokenInfoUrl, providerToken));
+            
+            
+            HttpResponseMessage httpResponseMessage = new HttpResponseMessage();
+            httpResponseMessage = await httpClient.GetAsync(RequestUri);
+
+            if (httpResponseMessage.StatusCode != HttpStatusCode.OK)
+            {
+                //Console.WriteLine(ex.Message);
+                return null;
+            }
+
+            var response = JObject.Parse(httpResponseMessage.Content.ReadAsStringAsync().Result);
+            return response;
+        }
+
+        public async Task<JObject> getDirectionsHttpResponseResult(string origin, string destination){
+            var httpClient = new HttpClient();
+            var qb = new QueryBuilder();
+            qb.Add("origin", origin);
+            qb.Add("destination", destination);
+            qb.Add("key", _googleApiKey);
+            
+            Uri RequestUri = new Uri(GoogleDirectionsApiUrl + qb.ToQueryString());
             // new Uri(string.Format(GoogleApiTokenInfoUrl, providerToken));
             
             
