@@ -76,8 +76,8 @@ namespace api.cabcheap.com.Controllers
         public async Task<ProviderUserDetails> GetGoogleDetailsAsync(string providerToken)
         {
 
-            var httpClient = new HttpClient();
-            var requestUri = new Uri(string.Format(GoogleApiTokenInfoUrl, providerToken));
+/*             var httpClient = new HttpClient();
+            var requestUri = new Uri(string.Format(GoogleApiTokenInfoUrl, providerToken)); */
 
             var tokenInfoResponse = await getHttpResponseResult(GoogleApiTokenInfoUrl, providerToken, "GOOGLE");
 
